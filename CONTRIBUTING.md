@@ -1,4 +1,4 @@
-﻿# Contributing to AB Download Manager MCP Server
+# Contributing to AB Download Manager MCP Server
 
 Thank you for your interest in contributing to `abdm-mcp`!
 

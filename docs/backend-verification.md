@@ -1,4 +1,4 @@
-﻿# ABDM Backend Capabilities & Interoperability Verification
+# ABDM Backend Capabilities & Interoperability Verification
 
 Date: September 2026  
 Target Environment: Windows (AB Download Manager v1.10.x+)
