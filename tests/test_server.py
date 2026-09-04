@@ -1,6 +1,5 @@
 """Unit tests for FastMCP server instantiation and tool annotations."""
 
-import pytest
 from abdm_mcp.server import create_server
 
 

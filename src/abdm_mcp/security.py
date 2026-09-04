@@ -98,7 +98,7 @@ def validate_filename(filename: Optional[str]) -> Optional[str]:
         raise UnsafeFilenameError(f"Filename '{cleaned}' must not contain drive or stream prefixes (':').")
 
     if any(ord(c) < 32 for c in cleaned):
-        raise UnsafeFilenameError(f"Filename contains illegal control characters.")
+        raise UnsafeFilenameError("Filename contains illegal control characters.")
 
     # Check for Windows reserved names (e.g. CON, NUL, COM1, CON.txt)
     normalized = cleaned.rstrip(" .")

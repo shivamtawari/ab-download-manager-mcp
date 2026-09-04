@@ -38,7 +38,7 @@ async def test_ports():
                         resp = await client.get(url, headers=h)
                         if resp.status_code != 404:
                             print(f"[{port}] GET {ep} {h} -> Status {resp.status_code}: {resp.text[:100]}")
-                    except Exception as e:
+                    except Exception:
                         pass
 
 if __name__ == "__main__":

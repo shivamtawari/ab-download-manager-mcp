@@ -2,11 +2,9 @@
 
 import pytest
 import respx
-import httpx
-from pathlib import Path
 from abdm_mcp.config import Settings
 from abdm_mcp.backends.rest import RestBackend
-from abdm_mcp.errors import ABDMAuthenticationError, ABDMUnavailableError
+from abdm_mcp.errors import ABDMAuthenticationError
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 """ABDMService orchestrator coordinating security, REST backend, and CLI backend."""
 
 from pathlib import Path
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Optional
 
 from abdm_mcp.backends.cli import CliBackend
 from abdm_mcp.backends.rest import RestBackend

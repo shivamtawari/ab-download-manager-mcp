@@ -2,9 +2,8 @@
 
 import pytest
 import respx
-from pathlib import Path
 from abdm_mcp.config import Settings
-from abdm_mcp.errors import ABDMError, UnsupportedParameterError, UnsafeURLError
+from abdm_mcp.errors import ABDMError, UnsupportedParameterError
 from abdm_mcp.service import ABDMService
 
 

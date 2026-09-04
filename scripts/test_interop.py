@@ -1,7 +1,6 @@
 import httpx
 import asyncio
 import subprocess
-import json
 
 async def test_rest_and_cli():
     url = "http://127.0.0.1:15151/start-headless-download"

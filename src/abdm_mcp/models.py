@@ -1,6 +1,6 @@
 """Pydantic schemas and typed data models for AB Download Manager MCP Server."""
 
-from typing import Literal, Optional, List, Dict, Any
+from typing import Literal, Optional, List
 from pydantic import BaseModel, Field
 
 DownloadMode = Literal["interactive", "headless"]

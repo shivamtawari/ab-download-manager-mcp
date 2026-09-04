@@ -2,7 +2,7 @@
 
 import asyncio
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from abdm_mcp.backends.base import AbstractBaseBackend
 from abdm_mcp.config import Settings

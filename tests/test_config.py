@@ -1,8 +1,6 @@
 """Unit tests for configuration discovery and settings."""
 
-import os
-from pathlib import Path
-from abdm_mcp.config import load_settings, discover_cli_path
+from abdm_mcp.config import load_settings
 
 
 def test_load_settings_defaults(monkeypatch, tmp_path):
