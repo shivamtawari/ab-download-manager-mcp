@@ -9,4 +9,3 @@ class AbstractBaseBackend(ABC):
     @abstractmethod
     async def is_available(self) -> bool:
         """Check if this backend is currently reachable and operational."""
-        pass

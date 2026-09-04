@@ -4,7 +4,6 @@ import ipaddress
 import socket
 import urllib.parse
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from abdm_mcp.errors import (
     SensitiveHeaderError,
@@ -77,7 +76,7 @@ def validate_url(url: str, allow_private_networks: bool = False) -> str:
     return url.strip()
 
 
-def validate_filename(filename: Optional[str]) -> Optional[str]:
+def validate_filename(filename: str | None) -> str | None:
     """
     Sanitize and validate that a filename contains no path traversal sequences or illegal characters.
     """
@@ -110,8 +109,8 @@ def validate_filename(filename: Optional[str]) -> Optional[str]:
 
 
 def resolve_download_path(
-    allowed_roots: List[Path],
-    subdirectory: Optional[str] = None,
+    allowed_roots: list[Path],
+    subdirectory: str | None = None,
 ) -> Path:
     """
     Safely resolve a download destination directory within the configured allowed sandbox roots.
@@ -137,9 +136,9 @@ def resolve_download_path(
 
 
 def validate_headers(
-    headers: Optional[Dict[str, str]],
+    headers: dict[str, str] | None,
     allow_sensitive: bool = False,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Validate headers and reject sensitive credentials unless explicitly permitted.
     """

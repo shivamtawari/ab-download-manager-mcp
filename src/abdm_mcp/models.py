@@ -1,6 +1,7 @@
 """Pydantic schemas and typed data models for AB Download Manager MCP Server."""
 
-from typing import Literal, Optional, List
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 DownloadMode = Literal["interactive", "headless"]
@@ -11,16 +12,16 @@ class DownloadSubmission(BaseModel):
     """Result of submitting a download request."""
     accepted: bool = Field(description="Whether the task was accepted by ABDM")
     backend: Literal["rest", "cli"] = Field(description="Which backend processed the request")
-    download_id: Optional[str] = Field(default=None, description="Assigned task ID if available")
+    download_id: str | None = Field(default=None, description="Assigned task ID if available")
     mode: DownloadMode = Field(description="Mode under which download was created")
-    message: Optional[str] = Field(default=None, description="Status or error message")
+    message: str | None = Field(default=None, description="Status or error message")
 
 
 class BatchSubmission(BaseModel):
     """Summary result of submitting a batch of download requests."""
     submitted: int = Field(description="Number of successfully submitted URLs")
     failed: int = Field(description="Number of failed submissions")
-    items: List[DownloadSubmission] = Field(default_factory=list, description="Per-URL results")
+    items: list[DownloadSubmission] = Field(default_factory=list, description="Per-URL results")
 
 
 class ActionResult(BaseModel):
@@ -28,7 +29,7 @@ class ActionResult(BaseModel):
     success: bool = Field(description="Whether the action succeeded")
     download_id: str = Field(description="Target download task ID")
     action: str = Field(description="Action name (e.g. pause, resume, remove)")
-    message: Optional[str] = Field(default=None, description="Details or error message")
+    message: str | None = Field(default=None, description="Details or error message")
 
 
 class QueueInfo(BaseModel):
@@ -40,25 +41,25 @@ class QueueInfo(BaseModel):
 class DownloadInfo(BaseModel):
     """Detailed information about an individual download task."""
     id: str = Field(description="Unique task identifier")
-    name: Optional[str] = Field(default=None, description="File name")
+    name: str | None = Field(default=None, description="File name")
     status: str = Field(description="Current task status (e.g. Paused, Downloading, Completed, Error)")
-    folder: Optional[str] = Field(default=None, description="Destination folder")
-    url: Optional[str] = Field(default=None, description="Source URL")
-    queue_id: Optional[int] = Field(default=None, description="Associated queue ID")
+    folder: str | None = Field(default=None, description="Destination folder")
+    url: str | None = Field(default=None, description="Source URL")
+    queue_id: int | None = Field(default=None, description="Associated queue ID")
 
 
 class DownloadListResult(BaseModel):
     """List of downloads currently reported by the system."""
-    items: List[DownloadInfo] = Field(default_factory=list, description="List of downloads")
+    items: list[DownloadInfo] = Field(default_factory=list, description="List of downloads")
     count: int = Field(description="Total count of items returned")
 
 
 class HealthReport(BaseModel):
     """Health and capability report of the connected AB Download Manager system."""
     rest_available: bool = Field(description="Whether the local REST integration port is reachable")
-    authenticated: Optional[bool] = Field(default=None, description="Whether authentication was verified")
+    authenticated: bool | None = Field(default=None, description="Whether authentication was verified")
     port: int = Field(description="Resolved active port")
     cli_available: bool = Field(description="Whether the ABDM CLI binary is present and operational")
-    cli_version: Optional[str] = Field(default=None, description="CLI version if detected")
+    cli_version: str | None = Field(default=None, description="CLI version if detected")
     shared_state_verified: bool = Field(description="Whether REST and CLI have been verified to share state")
-    capabilities: List[str] = Field(default_factory=list, description="List of supported operations")
+    capabilities: list[str] = Field(default_factory=list, description="List of supported operations")

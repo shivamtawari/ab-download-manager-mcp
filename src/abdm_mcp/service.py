@@ -1,7 +1,6 @@
 """ABDMService orchestrator coordinating security, REST backend, and CLI backend."""
 
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from abdm_mcp.backends.cli import CliBackend
 from abdm_mcp.backends.rest import RestBackend
@@ -42,7 +41,7 @@ class ABDMService:
         rest_ok, authenticated, _ = await self.rest.check_health()
         cli_ok = await self.cli.is_available()
 
-        capabilities: List[str] = []
+        capabilities: list[str] = []
         if rest_ok:
             capabilities.extend(["interactive_download", "queues"])
         if cli_ok:
@@ -62,11 +61,11 @@ class ABDMService:
         self,
         url: str,
         mode: DownloadMode = "interactive",
-        filename: Optional[str] = None,
-        subdirectory: Optional[str] = None,
-        queue_id: Optional[int] = None,
-        headers: Optional[Dict[str, str]] = None,
-        download_page: Optional[str] = None,
+        filename: str | None = None,
+        subdirectory: str | None = None,
+        queue_id: int | None = None,
+        headers: dict[str, str] | None = None,
+        download_page: str | None = None,
     ) -> DownloadSubmission:
         """Submit a single download task."""
         clean_url = validate_url(url, allow_private_networks=self.settings.allow_private_networks)
@@ -134,9 +133,9 @@ class ABDMService:
 
     async def download_batch(
         self,
-        urls: List[str],
+        urls: list[str],
         mode: DownloadMode = "interactive",
-        queue_id: Optional[int] = None,
+        queue_id: int | None = None,
     ) -> BatchSubmission:
         """Submit a batch of URLs with partial success tracking."""
         if not urls:
@@ -152,7 +151,7 @@ class ABDMService:
                 "queue_id cannot be specified for batch downloads when mode='interactive'."
             )
 
-        items: List[DownloadSubmission] = []
+        items: list[DownloadSubmission] = []
         submitted = 0
         failed = 0
 
@@ -179,11 +178,11 @@ class ABDMService:
 
         return BatchSubmission(submitted=submitted, failed=failed, items=items)
 
-    async def get_queues(self) -> List[QueueInfo]:
+    async def get_queues(self) -> list[QueueInfo]:
         """Fetch all configured queues from ABDM."""
         return await self.rest.get_queues()
 
-    async def list_downloads(self, status: Optional[str] = None) -> DownloadListResult:
+    async def list_downloads(self, status: str | None = None) -> DownloadListResult:
         """List current downloads using the CLI backend."""
         if not await self.cli.is_available():
             raise BackendCompatibilityError("Listing downloads requires the ABDM CLI binary.")
@@ -237,7 +236,7 @@ class ABDMService:
         if not await self.cli.is_available():
             raise BackendCompatibilityError("Removing downloads requires the ABDM CLI binary.")
 
-        file_to_delete: Optional[Path] = None
+        file_to_delete: Path | None = None
         if delete_file:
             try:
                 info = await self.get_download(download_id)

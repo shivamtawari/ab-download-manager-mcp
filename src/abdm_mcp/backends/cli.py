@@ -2,7 +2,6 @@
 
 import asyncio
 import re
-from typing import Dict, List, Optional, Tuple
 
 from abdm_mcp.backends.base import AbstractBaseBackend
 from abdm_mcp.config import Settings
@@ -32,7 +31,7 @@ class CliBackend(AbstractBaseBackend):
         except Exception:
             return False
 
-    async def _execute_bounded(self, args: List[str]) -> Tuple[int, str, str]:
+    async def _execute_bounded(self, args: list[str]) -> tuple[int, str, str]:
         """
         Safely execute a CLI command using create_subprocess_exec (NO shell).
         Enforces execution timeout and maximum streaming output limits.
@@ -48,8 +47,8 @@ class CliBackend(AbstractBaseBackend):
         )
 
         max_bytes = self.settings.cli_max_output_bytes
-        stdout_chunks: List[bytes] = []
-        stderr_chunks: List[bytes] = []
+        stdout_chunks: list[bytes] = []
+        stderr_chunks: list[bytes] = []
         total_stdout = 0
         total_stderr = 0
 
@@ -99,11 +98,11 @@ class CliBackend(AbstractBaseBackend):
     async def add_download(
         self,
         url: str,
-        filename: Optional[str] = None,
-        folder: Optional[str] = None,
-        queue_id: Optional[int] = None,
-        headers: Optional[Dict[str, str]] = None,
-        download_page: Optional[str] = None,
+        filename: str | None = None,
+        folder: str | None = None,
+        queue_id: int | None = None,
+        headers: dict[str, str] | None = None,
+        download_page: str | None = None,
         start: bool = True,
     ) -> str:
         """
@@ -141,7 +140,7 @@ class CliBackend(AbstractBaseBackend):
 
         raise CLIUnavailableError(f"Could not parse download ID from CLI output: {stdout}")
 
-    async def show_downloads(self, download_id: Optional[str] = None) -> List[DownloadInfo]:
+    async def show_downloads(self, download_id: str | None = None) -> list[DownloadInfo]:
         """
         Query download status using `abdm download show [<id>]`.
         Parses the ASCII box table format.
@@ -161,7 +160,7 @@ class CliBackend(AbstractBaseBackend):
 
         # Parse ASCII table rows: ? ID ? Status ? Name ? Folder ?
         # Note: box drawing characters can be '?' or unicode box lines
-        results: List[DownloadInfo] = []
+        results: list[DownloadInfo] = []
         lines = stdout.splitlines()
         row_pattern = re.compile(
             r"^[?|\u2502]\s*(\d+)\s*[?|\u2502]\s*([^?|\u2502]+?)\s*[?|\u2502]\s*([^?|\u2502]+?)\s*[?|\u2502]\s*([^?|\u2502]+?)\s*[?|\u2502]"

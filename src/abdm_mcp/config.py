@@ -5,7 +5,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import List, Optional
+
 from pydantic import BaseModel
 
 
@@ -13,9 +13,9 @@ class Settings(BaseModel):
     """Configuration settings for ABDM MCP Server."""
     config_dir: Path
     port: int = 15151
-    api_key: Optional[str] = None
-    cli_path: Optional[Path] = None
-    allowed_roots: List[Path]
+    api_key: str | None = None
+    cli_path: Path | None = None
+    allowed_roots: list[Path]
     allow_private_networks: bool = False
     allow_sensitive_headers: bool = False
     allow_file_deletion: bool = False
@@ -25,7 +25,7 @@ class Settings(BaseModel):
     cli_max_output_bytes: int = 1024 * 1024  # 1 MB
 
 
-def discover_cli_path() -> Optional[Path]:
+def discover_cli_path() -> Path | None:
     """Attempt to locate the AB Download Manager CLI binary."""
     explicit = os.environ.get("ABDM_CLI_PATH")
     if explicit:
@@ -77,7 +77,7 @@ def load_settings() -> Settings:
         settings_file = config_dir / "config" / "appSettings.json"
         if settings_file.exists():
             try:
-                with open(settings_file, "r", encoding="utf-8") as f:
+                with open(settings_file, encoding="utf-8") as f:
                     data = json.load(f)
                     if "browserIntegrationPort" in data:
                         port = int(data["browserIntegrationPort"])

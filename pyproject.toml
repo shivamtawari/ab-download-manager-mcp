@@ -25,7 +25,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
 ]
 dependencies = [
-    "mcp>=2.0.0,<3.0.0",
+    "mcp>=1.2.0,<2.0.0",
     "httpx>=0.28.0",
     "pydantic>=2.0.0",
 ]
@@ -53,6 +53,10 @@ packages = ["src/abdm_mcp"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

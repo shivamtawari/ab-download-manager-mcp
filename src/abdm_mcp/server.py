@@ -1,6 +1,7 @@
 """Official Model Context Protocol (MCP) server implementation for AB Download Manager."""
 
-from typing import Dict, List, Literal, Optional
+from typing import Literal
+
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
@@ -64,11 +65,11 @@ def create_server() -> FastMCP:
     async def abdm_download(
         url: str,
         mode: Literal["interactive", "headless"] = "interactive",
-        filename: Optional[str] = None,
-        subdirectory: Optional[str] = None,
-        queue_id: Optional[int] = None,
-        headers: Optional[Dict[str, str]] = None,
-        download_page: Optional[str] = None,
+        filename: str | None = None,
+        subdirectory: str | None = None,
+        queue_id: int | None = None,
+        headers: dict[str, str] | None = None,
+        download_page: str | None = None,
     ) -> DownloadSubmission:
         return await service.download(
             url=url,
@@ -86,9 +87,9 @@ def create_server() -> FastMCP:
         annotations=DOWNLOAD_ANNOTATIONS,
     )
     async def abdm_download_batch(
-        urls: List[str],
+        urls: list[str],
         mode: Literal["interactive", "headless"] = "interactive",
-        queue_id: Optional[int] = None,
+        queue_id: int | None = None,
     ) -> BatchSubmission:
         return await service.download_batch(
             urls=urls,
@@ -101,7 +102,7 @@ def create_server() -> FastMCP:
         description="List all configured download queues in AB Download Manager.",
         annotations=READ_ANNOTATIONS,
     )
-    async def abdm_get_queues() -> List[QueueInfo]:
+    async def abdm_get_queues() -> list[QueueInfo]:
         return await service.get_queues()
 
     @mcp.tool(
@@ -118,7 +119,7 @@ def create_server() -> FastMCP:
         annotations=READ_ANNOTATIONS,
     )
     async def abdm_list_downloads(
-        status: Optional[Literal["active", "paused", "completed", "error", "all"]] = None,
+        status: Literal["active", "paused", "completed", "error", "all"] | None = None,
     ) -> DownloadListResult:
         query_status = None if status == "all" else status
         return await service.list_downloads(status=query_status)

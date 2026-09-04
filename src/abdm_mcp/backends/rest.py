@@ -1,6 +1,7 @@
 """Ktor REST backend implementation for AB Download Manager."""
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
+
 import httpx
 
 from abdm_mcp.backends.base import AbstractBaseBackend
@@ -16,7 +17,7 @@ class RestBackend(AbstractBaseBackend):
         self.settings = settings
         self.base_url = f"http://127.0.0.1:{settings.port}"
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
         if self.settings.api_key:
             headers["X-API-Key"] = self.settings.api_key
@@ -31,7 +32,7 @@ class RestBackend(AbstractBaseBackend):
         except Exception:
             return False
 
-    async def check_health(self) -> Tuple[bool, Optional[bool], List[QueueInfo]]:
+    async def check_health(self) -> tuple[bool, bool | None, list[QueueInfo]]:
         """
         Probe the REST endpoint and return (reachable, authenticated, queues).
         """
@@ -51,7 +52,7 @@ class RestBackend(AbstractBaseBackend):
         except Exception:
             return False, None, []
 
-    async def get_queues(self) -> List[QueueInfo]:
+    async def get_queues(self) -> list[QueueInfo]:
         """Fetch configured queues via GET /queues."""
         url = f"{self.base_url}/queues"
         try:
@@ -74,8 +75,8 @@ class RestBackend(AbstractBaseBackend):
     async def add_interactive(
         self,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
-        download_page: Optional[str] = None,
+        headers: dict[str, str] | None = None,
+        download_page: str | None = None,
     ) -> bool:
         """
         Submit a download task that triggers the ABDM GUI confirmation dialog via POST /add.
@@ -101,17 +102,17 @@ class RestBackend(AbstractBaseBackend):
     async def add_headless(
         self,
         url: str,
-        filename: Optional[str] = None,
-        folder: Optional[str] = None,
-        queue_id: Optional[int] = None,
-        headers: Optional[Dict[str, str]] = None,
-        download_page: Optional[str] = None,
+        filename: str | None = None,
+        folder: str | None = None,
+        queue_id: int | None = None,
+        headers: dict[str, str] | None = None,
+        download_page: str | None = None,
     ) -> bool:
         """
         Submit a headless download task without displaying a GUI popup via POST /start-headless-download.
         """
         endpoint = f"{self.base_url}/start-headless-download"
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "downloadSource": {
                 "link": url,
                 "headers": headers or {},

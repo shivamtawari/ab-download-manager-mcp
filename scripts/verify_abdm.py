@@ -1,9 +1,11 @@
-import zipfile
-import re
+import asyncio
 import glob
 import os
+import re
+import zipfile
+
 import httpx
-import asyncio
+
 
 def inspect_jar():
     app_dir = os.path.expandvars(r"%LOCALAPPDATA%\ABDownloadManager\app")
