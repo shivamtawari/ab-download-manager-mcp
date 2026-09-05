@@ -114,23 +114,46 @@ def resolve_download_path(
 ) -> Path:
     """
     Safely resolve a download destination directory within the configured allowed sandbox roots.
+    Supports targeting any configured allowed root via absolute path or root folder name prefix.
     """
     if not allowed_roots:
         raise UnsafePathError("No allowed download roots are configured.")
 
-    base_root = allowed_roots[0].resolve()
+    resolved_roots = [r.resolve() for r in allowed_roots]
 
-    if not subdirectory:
-        return base_root
+    if not subdirectory or not subdirectory.strip():
+        return resolved_roots[0]
 
     sub = subdirectory.strip()
-    # Reject drive prefixes and absolute path attempts
-    if sub.startswith("/") or sub.startswith("\\") or ":" in sub:
-        raise UnsafePathError(f"Subdirectory '{subdirectory}' must be a relative path.")
+    sub_path = Path(sub)
 
-    target = (base_root / sub).resolve()
-    if not target.is_relative_to(base_root):
-        raise UnsafePathError(f"Subdirectory '{subdirectory}' attempts to escape the allowed root '{base_root}'.")
+    # 1. If subdirectory is an absolute path or drive path, verify it falls within any allowed root
+    if sub_path.is_absolute() or sub.startswith("/") or sub.startswith("\\") or (len(sub) > 1 and sub[1] == ":"):
+        candidate = sub_path.resolve()
+        for root in resolved_roots:
+            if candidate == root or candidate.is_relative_to(root):
+                return candidate
+        raise UnsafePathError(
+            f"Target path '{subdirectory}' is outside all configured allowed roots: {resolved_roots}"
+        )
+
+    # 2. If subdirectory is relative, check if its first component selects a non-default root
+    parts = sub_path.parts
+    if parts:
+        first_part = parts[0].lower()
+        for root in resolved_roots:
+            if root.name.lower() == first_part:
+                remainder = Path(*parts[1:]) if len(parts) > 1 else Path(".")
+                target = (root / remainder).resolve()
+                if target.is_relative_to(root):
+                    return target
+                raise UnsafePathError(f"Subdirectory '{subdirectory}' attempts to escape allowed root '{root}'.")
+
+    # 3. Default to resolving relative to the primary root (allowed_roots[0])
+    primary_root = resolved_roots[0]
+    target = (primary_root / sub).resolve()
+    if not target.is_relative_to(primary_root):
+        raise UnsafePathError(f"Subdirectory '{subdirectory}' attempts to escape the allowed root '{primary_root}'.")
 
     return target
 

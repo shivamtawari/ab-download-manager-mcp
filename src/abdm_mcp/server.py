@@ -5,7 +5,7 @@ from typing import Literal
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
-from abdm_mcp.config import load_settings
+from abdm_mcp.config import Settings, load_settings
 from abdm_mcp.models import (
     ActionResult,
     BatchSubmission,
@@ -47,24 +47,29 @@ READ_ANNOTATIONS = ToolAnnotations(
 )
 
 
-def create_server() -> FastMCP:
+def create_server(settings: Settings | None = None) -> FastMCP:
     """Instantiate and configure the FastMCP server with registered ABDM tools."""
     mcp = FastMCP("AB Download Manager")
-    settings = load_settings()
+    if settings is None:
+        settings = load_settings()
     service = ABDMService(settings)
+
+    default_mode: Literal["interactive", "headless"] = (
+        "headless" if settings.default_mode == "headless" else "interactive"
+    )
 
     @mcp.tool(
         name="abdm_download",
         description=(
             "Submit a download task to AB Download Manager with multi-threaded acceleration. "
-            "In 'interactive' mode (default), triggers the desktop confirmation GUI. "
+            "In 'interactive' mode, triggers the desktop confirmation GUI. "
             "In 'headless' mode, starts silent background download into allowed sandboxed folder."
         ),
         annotations=DOWNLOAD_ANNOTATIONS,
     )
     async def abdm_download(
         url: str,
-        mode: Literal["interactive", "headless"] = "interactive",
+        mode: Literal["interactive", "headless"] = default_mode,
         filename: str | None = None,
         subdirectory: str | None = None,
         queue_id: int | None = None,
@@ -88,7 +93,7 @@ def create_server() -> FastMCP:
     )
     async def abdm_download_batch(
         urls: list[str],
-        mode: Literal["interactive", "headless"] = "interactive",
+        mode: Literal["interactive", "headless"] = default_mode,
         queue_id: int | None = None,
     ) -> BatchSubmission:
         return await service.download_batch(

@@ -31,6 +31,22 @@ class CliBackend(AbstractBaseBackend):
         except Exception:
             return False
 
+    async def get_version(self) -> str | None:
+        """Query and parse the AB Download Manager CLI version."""
+        if not self.cli_path or not self.cli_path.exists():
+            return None
+        try:
+            rc, stdout, _ = await self._execute_bounded(["--version"])
+            if rc == 0 and stdout:
+                match = re.search(r"version\s+([0-9.]+)", stdout, re.IGNORECASE)
+                if match:
+                    return match.group(1)
+                first_line = stdout.strip().splitlines()[0]
+                return first_line
+            return None
+        except Exception:
+            return None
+
     async def _execute_bounded(self, args: list[str]) -> tuple[int, str, str]:
         """
         Safely execute a CLI command using create_subprocess_exec (NO shell).
@@ -77,13 +93,22 @@ class CliBackend(AbstractBaseBackend):
                             pass
                         raise CLIOutputLimitError(f"CLI stderr exceeded {max_bytes} bytes buffer limit.")
 
+        if proc.stdout is None or proc.stderr is None:
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
+            raise CLIUnavailableError("Subprocess failed to establish stdout/stderr pipes.")
+
         try:
-            async with asyncio.timeout(self.settings.cli_timeout):
-                await asyncio.gather(
+            await asyncio.wait_for(
+                asyncio.gather(
                     read_stream(proc.stdout, True),
                     read_stream(proc.stderr, False),
                     proc.wait(),
-                )
+                ),
+                timeout=self.settings.cli_timeout,
+            )
         except asyncio.TimeoutError:
             try:
                 proc.kill()

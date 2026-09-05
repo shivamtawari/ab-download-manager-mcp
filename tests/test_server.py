@@ -36,3 +36,23 @@ def test_tool_annotations():
     # Check destructive hint on remove
     remove_tool = tools["abdm_remove"]
     assert remove_tool.annotations.destructiveHint is True
+
+
+def test_configured_default_mode(tmp_path):
+    from abdm_mcp.config import Settings
+
+    settings = Settings(
+        config_dir=tmp_path,
+        allowed_roots=[tmp_path],
+        default_mode="headless",
+    )
+    mcp = create_server(settings=settings)
+    tools = {t.name: t for t in mcp._tool_manager.list_tools()}
+
+    # Verify abdm_download has default "headless"
+    dl_schema = tools["abdm_download"].parameters
+    assert dl_schema["properties"]["mode"]["default"] == "headless"
+
+    # Verify abdm_download_batch has default "headless"
+    batch_schema = tools["abdm_download_batch"].parameters
+    assert batch_schema["properties"]["mode"]["default"] == "headless"

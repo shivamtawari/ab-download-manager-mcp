@@ -1,6 +1,7 @@
 """ABDMService orchestrator coordinating security, REST backend, and CLI backend."""
 
 from pathlib import Path
+from typing import Literal
 
 from abdm_mcp.backends.cli import CliBackend
 from abdm_mcp.backends.rest import RestBackend
@@ -27,6 +28,13 @@ from abdm_mcp.security import (
     validate_url,
 )
 
+STATUS_FILTER_MAP: dict[str, set[str]] = {
+    "active": {"active", "downloading"},
+    "paused": {"paused"},
+    "completed": {"completed", "finished"},
+    "error": {"error", "failed"},
+}
+
 
 class ABDMService:
     """Service layer exposing high-level operations across ABDM backends."""
@@ -40,6 +48,7 @@ class ABDMService:
         """Perform a full health and capability check across REST and CLI backends."""
         rest_ok, authenticated, _ = await self.rest.check_health()
         cli_ok = await self.cli.is_available()
+        cli_version = await self.cli.get_version() if cli_ok else None
 
         capabilities: list[str] = []
         if rest_ok:
@@ -52,15 +61,15 @@ class ABDMService:
             authenticated=authenticated,
             port=self.settings.port,
             cli_available=cli_ok,
-            cli_version="1.10.x" if cli_ok else None,
-            shared_state_verified=True,
+            cli_version=cli_version,
+            shared_state_verified=bool(rest_ok and cli_ok),
             capabilities=capabilities,
         )
 
     async def download(
         self,
         url: str,
-        mode: DownloadMode = "interactive",
+        mode: DownloadMode | None = None,
         filename: str | None = None,
         subdirectory: str | None = None,
         queue_id: int | None = None,
@@ -68,6 +77,8 @@ class ABDMService:
         download_page: str | None = None,
     ) -> DownloadSubmission:
         """Submit a single download task."""
+        if mode is None:
+            mode = "headless" if self.settings.default_mode == "headless" else "interactive"
         clean_url = validate_url(url, allow_private_networks=self.settings.allow_private_networks)
         clean_headers = validate_headers(headers, allow_sensitive=self.settings.allow_sensitive_headers)
 
@@ -134,10 +145,13 @@ class ABDMService:
     async def download_batch(
         self,
         urls: list[str],
-        mode: DownloadMode = "interactive",
+        mode: DownloadMode | None = None,
         queue_id: int | None = None,
     ) -> BatchSubmission:
         """Submit a batch of URLs with partial success tracking."""
+        if mode is None:
+            mode = "headless" if self.settings.default_mode == "headless" else "interactive"
+
         if not urls:
             return BatchSubmission(submitted=0, failed=0, items=[])
 
@@ -165,10 +179,14 @@ class ABDMService:
                 items.append(sub)
                 submitted += 1
             except Exception as e:
+                failing_backend: Literal["rest", "cli"] = "rest"
+                if mode == "headless" and await self.cli.is_available():
+                    failing_backend = "cli"
+
                 items.append(
                     DownloadSubmission(
                         accepted=False,
-                        backend="rest" if mode == "interactive" else "cli",
+                        backend=failing_backend,
                         download_id=None,
                         mode=mode,
                         message=str(e),
@@ -189,7 +207,8 @@ class ABDMService:
         items = await self.cli.show_downloads()
         if status:
             lower_status = status.lower()
-            items = [item for item in items if item.status.lower() == lower_status]
+            target_statuses = STATUS_FILTER_MAP.get(lower_status, {lower_status})
+            items = [item for item in items if item.status.lower() in target_statuses]
         return DownloadListResult(items=items, count=len(items))
 
     async def get_download(self, download_id: str) -> DownloadInfo:

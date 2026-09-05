@@ -85,6 +85,38 @@ def test_resolve_download_path():
         resolve_download_path([root], "/absolute/path")
 
 
+def test_resolve_download_path_multiple_allowed_roots(tmp_path):
+    root1 = (tmp_path / "downloads").resolve()
+    root2 = (tmp_path / "storage").resolve()
+    root1.mkdir()
+    root2.mkdir()
+    roots = [root1, root2]
+
+    # Default to root1 when None or empty
+    assert resolve_download_path(roots, None) == root1
+    assert resolve_download_path(roots, "") == root1
+
+    # Absolute path targeting root2
+    sub2 = (root2 / "models").resolve()
+    assert resolve_download_path(roots, str(sub2)) == sub2
+
+    # Relative path selecting root2 by folder name prefix
+    assert resolve_download_path(roots, "storage/models") == (root2 / "models").resolve()
+    assert resolve_download_path(roots, "storage") == root2
+
+    # Relative path targeting default root1
+    assert resolve_download_path(roots, "subfolder") == (root1 / "subfolder").resolve()
+
+    # Absolute path outside all allowed roots is rejected
+    outside = (tmp_path / "outside").resolve()
+    with pytest.raises(UnsafePathError, match="outside all configured allowed roots"):
+        resolve_download_path(roots, str(outside))
+
+    # Path traversal attempting to escape root2 is rejected
+    with pytest.raises(UnsafePathError, match="attempts to escape allowed root"):
+        resolve_download_path(roots, "storage/../../escape")
+
+
 def test_validate_headers():
     safe = {"User-Agent": "MyAgent", "Accept": "*/*"}
     assert validate_headers(safe) == safe
