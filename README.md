@@ -5,7 +5,7 @@
 [![MCP Specification](https://img.shields.io/badge/MCP-2.0+-green.svg)](https://modelcontextprotocol.io/)
 [![CI](https://github.com/shivamtawari/ab-download-manager-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/shivamtawari/ab-download-manager-mcp/actions)
 
-MCP server for [AB Download Manager](https://abdownloadmanager.com). Connects AI coding assistants and agents ([Claude Desktop](https://claude.ai/download), [Cursor](https://cursor.com), [Antigravity](https://github.com/google/antigravity)) to ABDM so they can offload large downloads—model weights, datasets, and archives—with multi-threaded acceleration (up to 32 connections), pause/resume, and queueing instead of choking on single-threaded agent HTTP calls.
+MCP server for [AB Download Manager](https://abdownloadmanager.com). Connects AI coding assistants and autonomous agents ([Claude Desktop](https://claude.ai/download), [Cursor](https://cursor.com), [Codex / ChatGPT](https://openai.com), [Windsurf](https://codeium.com/windsurf), [Kimi](https://kimi.moonshot.cn/), [Cline](https://github.com/cline/cline), [Zed](https://zed.dev), [Continue](https://continue.dev), [Antigravity](https://github.com/google/antigravity)) to ABDM so they can offload large downloads—model weights, datasets, and archives—with multi-threaded acceleration (up to 32 connections), pause/resume, and queueing instead of choking on single-threaded agent HTTP calls.
 
 ---
 
@@ -15,6 +15,16 @@ MCP server for [AB Download Manager](https://abdownloadmanager.com). Connects AI
 
 ```bash
 uvx abdm-mcp
+```
+
+### Network Transports (SSE & HTTP)
+
+```bash
+# Run with Server-Sent Events (SSE) for remote/containerized agents
+uvx abdm-mcp --transport sse --port 8000
+
+# Run with Streamable HTTP
+uvx abdm-mcp --transport streamable-http --port 8000
 ```
 
 ### Install with `pip`
@@ -27,6 +37,8 @@ python -m abdm_mcp
 ---
 
 ## Agent Configuration
+
+`abdm-mcp` complies with the Model Context Protocol standard and works across all major AI coding agents, IDEs, and assistant platforms.
 
 ### 1. Claude Desktop
 Add to your `claude_desktop_config.json`:
@@ -48,8 +60,23 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-### 2. Cursor
-Add to your `.cursor/mcp.json` or Global MCP settings:
+### 2. OpenAI Codex & ChatGPT Desktop
+Add to `~/.codex/config.toml` (global) or `.codex/config.toml` (project-scoped):
+
+```toml
+[mcp_servers.abdm]
+command = "uvx"
+args = ["abdm-mcp"]
+env = { "ABDM_MCP_DEFAULT_MODE" = "headless" }
+```
+
+Or add via the Codex CLI:
+```bash
+codex mcp add abdm -- uvx abdm-mcp
+```
+
+### 3. Cursor
+Add to your project's `.cursor/mcp.json` or Cursor Settings > Features > MCP:
 
 ```json
 {
@@ -60,6 +87,108 @@ Add to your `.cursor/mcp.json` or Global MCP settings:
     }
   }
 }
+```
+
+### 4. Windsurf (Codeium)
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "abdm": {
+      "command": "uvx",
+      "args": ["abdm-mcp"]
+    }
+  }
+}
+```
+
+### 5. Kimi (Moonshot AI / Kimi CLI)
+Add to your Kimi Agent configuration (`kimi_mcp.json` or agent settings):
+
+```json
+{
+  "mcpServers": {
+    "abdm": {
+      "command": "uvx",
+      "args": ["abdm-mcp"],
+      "env": {
+        "ABDM_MCP_DEFAULT_MODE": "headless"
+      }
+    }
+  }
+}
+```
+
+### 6. Cline & Roo Code (VS Code)
+Open Settings in Cline / Roo Code and add under MCP Servers:
+
+```json
+{
+  "mcpServers": {
+    "abdm": {
+      "command": "uvx",
+      "args": ["abdm-mcp"]
+    }
+  }
+}
+```
+
+### 7. Zed Editor
+Add to `~/.config/zed/settings.json`:
+
+```json
+{
+  "context_servers": {
+    "abdm": {
+      "command": {
+        "env": {},
+        "path": "uvx",
+        "args": ["abdm-mcp"]
+      }
+    }
+  }
+}
+```
+
+### 8. Continue.dev
+Add to `~/.continue/config.json`:
+
+```json
+{
+  "experimental": {
+    "modelContextProtocolServers": [
+      {
+        "transport": {
+          "type": "stdio",
+          "command": "uvx",
+          "args": ["abdm-mcp"]
+        }
+      }
+    ]
+  }
+}
+```
+
+### 9. Google Antigravity
+Add to your workspace or user `mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "abdm": {
+      "command": "uvx",
+      "args": ["abdm-mcp"]
+    }
+  }
+}
+```
+
+### 10. Goose (Block)
+Run the extension add command or add to `~/.config/goose/config.yaml`:
+
+```bash
+goose configure add-extension --name abdm --command uvx --args abdm-mcp
 ```
 
 ---

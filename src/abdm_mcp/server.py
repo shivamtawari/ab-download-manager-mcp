@@ -46,10 +46,22 @@ READ_ANNOTATIONS = ToolAnnotations(
     openWorldHint=False,
 )
 
+SERVER_INSTRUCTIONS = (
+    "Use AB Download Manager to offload large file downloads (model weights, datasets, "
+    "disk images, archives, media files) instead of downloading them directly through "
+    "in-process HTTP calls. Use 'interactive' mode when the user should confirm the download "
+    "location via the desktop GUI, or 'headless' mode for silent background downloads into "
+    "the sandboxed download folder. Check status with abdm_check_status before querying queues."
+)
 
-def create_server(settings: Settings | None = None) -> FastMCP:
+
+def create_server(
+    settings: Settings | None = None,
+    host: str = "127.0.0.1",
+    port: int = 8000,
+) -> FastMCP:
     """Instantiate and configure the FastMCP server with registered ABDM tools."""
-    mcp = FastMCP("AB Download Manager")
+    mcp = FastMCP("AB Download Manager", instructions=SERVER_INSTRUCTIONS, host=host, port=port)
     if settings is None:
         settings = load_settings()
     service = ABDMService(settings)
