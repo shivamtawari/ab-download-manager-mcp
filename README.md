@@ -5,7 +5,7 @@
 [![MCP Specification](https://img.shields.io/badge/MCP-2.0+-green.svg)](https://modelcontextprotocol.io/)
 [![CI](https://github.com/shivamtawari/ab-download-manager-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/shivamtawari/ab-download-manager-mcp/actions)
 
-MCP server for [AB Download Manager](https://abdownloadmanager.com). Connects AI coding assistants and autonomous agents ([Claude Desktop](https://claude.ai/download), [Cursor](https://cursor.com), [Codex / ChatGPT](https://openai.com), [Windsurf](https://codeium.com/windsurf), [Kimi](https://kimi.moonshot.cn/), [Cline](https://github.com/cline/cline), [Zed](https://zed.dev), [Continue](https://continue.dev), [Antigravity](https://github.com/google/antigravity)) to ABDM so they can offload large downloads—model weights, datasets, and archives—with multi-threaded acceleration (up to 32 connections), pause/resume, and queueing instead of choking on single-threaded agent HTTP calls.
+MCP server for [AB Download Manager](https://abdownloadmanager.com). Connects AI coding assistants and autonomous agents ([Claude Desktop](https://claude.ai/download), [OpenAI Codex & ChatGPT](https://openai.com), [Google Antigravity](https://github.com/google/antigravity), [Kimi](https://kimi.moonshot.cn/), [Cursor](https://cursor.com), [Windsurf](https://codeium.com/windsurf), [Cline](https://github.com/cline/cline), [Zed](https://zed.dev)) to ABDM so they can offload large downloads—model weights, datasets, and archives—with multi-threaded acceleration (up to 32 connections), pause/resume, and queueing instead of choking on single-threaded agent HTTP calls.
 
 ---
 
@@ -75,8 +75,8 @@ Or add via the Codex CLI:
 codex mcp add abdm -- uvx abdm-mcp
 ```
 
-### 3. Cursor
-Add to your project's `.cursor/mcp.json` or Cursor Settings > Features > MCP:
+### 3. Google Antigravity
+Add to your workspace or user `mcp.json`:
 
 ```json
 {
@@ -89,21 +89,7 @@ Add to your project's `.cursor/mcp.json` or Cursor Settings > Features > MCP:
 }
 ```
 
-### 4. Windsurf (Codeium)
-Add to `~/.codeium/windsurf/mcp_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "abdm": {
-      "command": "uvx",
-      "args": ["abdm-mcp"]
-    }
-  }
-}
-```
-
-### 5. Kimi (Moonshot AI / Kimi CLI)
+### 4. Kimi (Moonshot AI / Kimi CLI)
 Add to your Kimi Agent configuration (`kimi_mcp.json` or agent settings):
 
 ```json
@@ -120,7 +106,35 @@ Add to your Kimi Agent configuration (`kimi_mcp.json` or agent settings):
 }
 ```
 
-### 6. Cline & Roo Code (VS Code)
+### 5. Cursor
+Add to your project's `.cursor/mcp.json` or Cursor Settings > Features > MCP:
+
+```json
+{
+  "mcpServers": {
+    "abdm": {
+      "command": "uvx",
+      "args": ["abdm-mcp"]
+    }
+  }
+}
+```
+
+### 6. Windsurf (Codeium)
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "abdm": {
+      "command": "uvx",
+      "args": ["abdm-mcp"]
+    }
+  }
+}
+```
+
+### 7. Cline & Roo Code (VS Code)
 Open Settings in Cline / Roo Code and add under MCP Servers:
 
 ```json
@@ -134,7 +148,7 @@ Open Settings in Cline / Roo Code and add under MCP Servers:
 }
 ```
 
-### 7. Zed Editor
+### 8. Zed Editor
 Add to `~/.config/zed/settings.json`:
 
 ```json
@@ -151,7 +165,7 @@ Add to `~/.config/zed/settings.json`:
 }
 ```
 
-### 8. Continue.dev
+### 9. Continue.dev
 Add to `~/.continue/config.json`:
 
 ```json
@@ -166,20 +180,6 @@ Add to `~/.continue/config.json`:
         }
       }
     ]
-  }
-}
-```
-
-### 9. Google Antigravity
-Add to your workspace or user `mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "abdm": {
-      "command": "uvx",
-      "args": ["abdm-mcp"]
-    }
   }
 }
 ```
