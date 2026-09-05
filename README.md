@@ -5,9 +5,7 @@
 [![MCP Specification](https://img.shields.io/badge/MCP-2.0+-green.svg)](https://modelcontextprotocol.io/)
 [![CI](https://github.com/shivamtawari/ab-download-manager-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/shivamtawari/ab-download-manager-mcp/actions)
 
-A production-grade Model Context Protocol (MCP) server that connects AI coding assistants and autonomous agents ([Claude Desktop](https://claude.ai/download), [Cursor](https://cursor.com), [Antigravity](https://github.com/google/antigravity)) to [AB Download Manager (ABDM)](https://abdownloadmanager.com).
-
-Offload large file downloads (game installers, AI model weights, dataset archives, video collections) from your agent sessions to AB Download Manager with multi-threaded segment acceleration (8–32 connections), pause/resume, and queueing.
+MCP server for [AB Download Manager](https://abdownloadmanager.com). Connects AI coding assistants and agents ([Claude Desktop](https://claude.ai/download), [Cursor](https://cursor.com), [Antigravity](https://github.com/google/antigravity)) to ABDM so they can offload large downloads—model weights, datasets, and archives—with multi-threaded acceleration (up to 32 connections), pause/resume, and queueing instead of choking on single-threaded agent HTTP calls.
 
 ---
 
