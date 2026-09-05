@@ -8,7 +8,7 @@ This project uses `uv` for fast, reproducible Python environment management:
 
 ```bash
 # Clone the repository
-git clone https://github.com/shiva/ab-download-manager-mcp.git
+git clone https://github.com/shivamtawari/ab-download-manager-mcp.git
 cd ab-download-manager-mcp
 
 # Install dependencies in a virtual environment

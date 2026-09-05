@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP Specification](https://img.shields.io/badge/MCP-2.0+-green.svg)](https://modelcontextprotocol.io/)
-[![CI](https://github.com/shiva/ab-download-manager-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/shiva/ab-download-manager-mcp/actions)
+[![CI](https://github.com/shivamtawari/ab-download-manager-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/shivamtawari/ab-download-manager-mcp/actions)
 
 A production-grade Model Context Protocol (MCP) server that connects AI coding assistants and autonomous agents ([Claude Desktop](https://claude.ai/download), [Cursor](https://cursor.com), [Antigravity](https://github.com/google/antigravity)) to [AB Download Manager (ABDM)](https://abdownloadmanager.com).
 
@@ -115,7 +115,7 @@ Autonomous agents are powerful, but should not have unrestricted filesystem or n
 
 ```bash
 # Clone the repository
-git clone https://github.com/shiva/ab-download-manager-mcp.git
+git clone https://github.com/shivamtawari/ab-download-manager-mcp.git
 cd ab-download-manager-mcp
 
 # Install dependencies with uv

@@ -34,9 +34,9 @@ dependencies = [
 abdm-mcp = "abdm_mcp.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/shiva/ab-download-manager-mcp"
-Repository = "https://github.com/shiva/ab-download-manager-mcp"
-Issues = "https://github.com/shiva/ab-download-manager-mcp/issues"
+Homepage = "https://github.com/shivamtawari/ab-download-manager-mcp"
+Repository = "https://github.com/shivamtawari/ab-download-manager-mcp"
+Issues = "https://github.com/shivamtawari/ab-download-manager-mcp/issues"
 
 [dependency-groups]
 dev = [
