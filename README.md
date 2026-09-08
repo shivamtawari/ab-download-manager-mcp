@@ -199,15 +199,27 @@ All tools return strongly-typed Pydantic schemas and include explicit MCP Tool A
 
 | Tool Name | Parameters | MCP Annotations | Description |
 | :--- | :--- | :--- | :--- |
-| `abdm_download` | `url` (str)<br>`mode` ("interactive" \| "headless")<br>`filename` (str, optional)<br>`subdirectory` (str, optional)<br>`queue_id` (int, optional)<br>`headers` (dict, optional)<br>`download_page` (str, optional) | `openWorldHint=True`<br>`destructiveHint=False` | Submits a download. Fails fast with `UnsupportedParameterError` if path/queue options are supplied in interactive mode. |
+| `abdm_download` | `url` (str)<br>`mode` ("interactive" \| "headless")<br>`filename` (str, optional)<br>`subdirectory` (str, optional)<br>`queue_id` (int, optional)<br>`category_id` (int, optional)<br>`speed_limit_bytes` (int, optional)<br>`start_queue` (bool = False)<br>`headers` (dict, optional)<br>`download_page` (str, optional) | `openWorldHint=True`<br>`destructiveHint=False` | Submits an HTTP/HTTPS download task with multi-threaded acceleration. Fails fast if interactive options clash. |
+| `abdm_download_hls` | `url` (str - .m3u8)<br>`mode` ("interactive" \| "headless")<br>`filename` (str, optional)<br>`subdirectory` (str, optional)<br>`queue_id` (int, optional)<br>`category_id` (int, optional)<br>`speed_limit_bytes` (int, optional)<br>`start_queue` (bool = False)<br>`headers` (dict, optional)<br>`download_page` (str, optional) | `openWorldHint=True`<br>`destructiveHint=False` | Captures and downloads an HLS (.m3u8) video/audio stream with automatic chunk assembly. |
 | `abdm_download_batch` | `urls` (list[str])<br>`mode` ("interactive" \| "headless")<br>`queue_id` (int, optional) | `openWorldHint=True`<br>`destructiveHint=False` | Enqueues up to 50 URLs in a batch with partial success tracking. |
 | `abdm_get_queues` | *none* | `readOnlyHint=True` | Fetches configured download queues from ABDM. |
-| `abdm_check_status` | *none* | `readOnlyHint=True` | Probes REST reachability, authentication, CLI status, and active capabilities. |
+| `abdm_check_status` | *none* | `readOnlyHint=True` | Probes REST reachability, authentication, dynamic port discovery, CLI status, and active capabilities. |
 | `abdm_list_downloads` | `status` ("active" \| "paused" \| "completed" \| "error" \| "all") | `readOnlyHint=True` | Lists current downloads reported by ABDM. |
 | `abdm_get_download` | `download_id` (str) | `readOnlyHint=True` | Returns status and metadata for a single download task by ID. |
-| `abdm_pause` | `download_id` (str) | `idempotentHint=True`<br>`destructiveHint=False` | Pauses an active download task. |
-| `abdm_resume` | `download_id` (str) | `idempotentHint=True`<br>`destructiveHint=False` | Resumes a paused download task. |
-| `abdm_remove` | `download_id` (str)<br>`delete_file` (bool = False) | `destructiveHint=True` | Cancels and removes a download task. File deletion requires policy opt-in and path verification. |
+| `abdm_pause` | `download_id` (str \| list[str]) | `idempotentHint=True`<br>`destructiveHint=False` | Pauses one or more active download tasks by ID. |
+| `abdm_resume` | `download_id` (str \| list[str]) | `idempotentHint=True`<br>`destructiveHint=False` | Resumes one or more paused download tasks by ID. |
+| `abdm_pause_all` | *none* | `idempotentHint=True`<br>`destructiveHint=False` | Pauses all currently active download tasks across ABDM. |
+| `abdm_resume_all` | *none* | `idempotentHint=True`<br>`destructiveHint=False` | Resumes all currently paused download tasks across ABDM. |
+| `abdm_remove` | `download_id` (str \| list[str])<br>`delete_file` (bool = False) | `destructiveHint=True` | Cancels and removes one or more download tasks. File deletion requires policy opt-in and path verification. |
+
+---
+
+## Architectural Highlights
+
+* **Auto-Wake on Demand**: If the ABDM desktop client is closed when an agent attempts a download or query, `abdm-mcp` automatically launches the GUI via `abdm gui start-if-not-started`.
+* **Dynamic Port Auto-Discovery**: Automatically queries the active Ktor integration port via `abdm gui integration show`, preventing failure if ABDM is configured with an alternate port.
+* **Resilient ANSI-Safe Parsing**: Mordant color formatting and Unicode/ASCII table borders are safely normalized during CLI state inspection.
+* **Zero-Port Setup over Stdio**: Runs seamlessly out of the box via `uvx abdm-mcp` without firewall warnings or localhost port conflicts.
 
 ---
 
@@ -226,9 +238,11 @@ Autonomous agents are powerful, but should not have unrestricted filesystem or n
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `ABDM_CONFIG_DIR` | `~/.abdm` | Custom or portable configuration directory path. |
-| `ABDM_PORT` | `15151` | Port of the ABDM local integration server (auto-discovered from `appSettings.json`). |
+| `ABDM_PORT` | `15151` | Default port of the ABDM local integration server (overridden by dynamic discovery). |
 | `ABDM_API_KEY` | *None* | Optional authentication key configured in ABDM. |
 | `ABDM_CLI_PATH` | Auto-detected | Explicit path to `ABDownloadManagerCli` executable. |
+| `ABDM_MCP_AUTO_START_APP` | `true` | Automatically wakes the ABDM desktop process on demand if offline. |
+| `ABDM_MCP_AUTO_DISCOVER_PORT` | `true` | Queries `abdm gui integration show` to auto-detect the active integration port. |
 | `ABDM_MCP_DEFAULT_MODE` | `interactive` | Default mode: `interactive` (GUI confirmation) or `headless` (silent background). |
 | `ABDM_MCP_ALLOWED_DOWNLOAD_ROOTS` | `~/Downloads/ABDM` | Comma-separated list of allowed download directories. |
 | `ABDM_MCP_ALLOW_PRIVATE_NETWORKS` | `false` | Set to `true` to allow downloads from LAN / private IPs. |

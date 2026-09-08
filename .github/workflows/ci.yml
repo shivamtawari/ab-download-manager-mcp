@@ -1,26 +1,31 @@
-﻿name: CI
+name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
-    name: Test (${{ matrix.os }} - Python ${{ matrix.python-version }})
+    name: Test (${{ matrix.os }}, py${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out code
+        uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           version: "latest"
@@ -31,8 +36,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-groups
 
-      - name: Run linting (Ruff)
+      - name: Lint with ruff
         run: uv run ruff check .
 
-      - name: Run test suite (pytest)
-        run: uv run pytest tests/
+      - name: Run test suite
+        run: uv run pytest -v

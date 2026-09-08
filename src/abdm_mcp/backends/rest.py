@@ -1,6 +1,4 @@
-"""Ktor REST backend implementation for AB Download Manager."""
-
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 
@@ -15,7 +13,14 @@ class RestBackend(AbstractBaseBackend):
 
     def __init__(self, settings: Settings):
         self.settings = settings
+        self.port = settings.port
         self.base_url = f"http://127.0.0.1:{settings.port}"
+
+    def set_port(self, port: int) -> None:
+        """Dynamically update the target port and base URL."""
+        self.port = port
+        self.settings.port = port
+        self.base_url = f"http://127.0.0.1:{port}"
 
     def _get_headers(self) -> dict[str, str]:
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
@@ -77,6 +82,7 @@ class RestBackend(AbstractBaseBackend):
         url: str,
         headers: dict[str, str] | None = None,
         download_page: str | None = None,
+        protocol: Literal["http", "hls"] = "http",
     ) -> bool:
         """
         Submit a download task that triggers the ABDM GUI confirmation dialog via POST /add.
@@ -84,6 +90,7 @@ class RestBackend(AbstractBaseBackend):
         endpoint = f"{self.base_url}/add"
         payload = [
             {
+                "type": protocol,
                 "link": url,
                 "headers": headers or {},
                 "downloadPage": download_page or "",
@@ -107,6 +114,9 @@ class RestBackend(AbstractBaseBackend):
         queue_id: int | None = None,
         headers: dict[str, str] | None = None,
         download_page: str | None = None,
+        speed_limit: int | None = None,
+        start_queue: bool = False,
+        protocol: Literal["http", "hls"] = "http",
     ) -> bool:
         """
         Submit a headless download task without displaying a GUI popup via POST /start-headless-download.
@@ -114,6 +124,7 @@ class RestBackend(AbstractBaseBackend):
         endpoint = f"{self.base_url}/start-headless-download"
         payload: dict[str, Any] = {
             "downloadSource": {
+                "type": protocol,
                 "link": url,
                 "headers": headers or {},
                 "downloadPage": download_page or "",
@@ -121,6 +132,9 @@ class RestBackend(AbstractBaseBackend):
             "name": filename or "",
             "folder": folder or "",
             "queueId": queue_id if queue_id is not None else 0,
+            "speedLimit": speed_limit,
+            "startDownload": True,
+            "startQueue": start_queue,
         }
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:

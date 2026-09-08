@@ -14,6 +14,7 @@ class DownloadSubmission(BaseModel):
     backend: Literal["rest", "cli"] = Field(description="Which backend processed the request")
     download_id: str | None = Field(default=None, description="Assigned task ID if available")
     mode: DownloadMode = Field(description="Mode under which download was created")
+    protocol: Literal["http", "hls"] = Field(default="http", description="Download protocol (http or hls)")
     message: str | None = Field(default=None, description="Status or error message")
 
 
@@ -25,10 +26,12 @@ class BatchSubmission(BaseModel):
 
 
 class ActionResult(BaseModel):
-    """Result of an action performed on a download task (pause, resume, remove)."""
+    """Result of an action performed on download task(s) (pause, resume, remove)."""
     success: bool = Field(description="Whether the action succeeded")
-    download_id: str = Field(description="Target download task ID")
-    action: str = Field(description="Action name (e.g. pause, resume, remove)")
+    download_id: str | None = Field(default=None, description="Target download task ID if single")
+    download_ids: list[str] = Field(default_factory=list, description="Target download task IDs affected")
+    count: int = Field(default=1, description="Number of tasks affected")
+    action: str = Field(description="Action name (e.g. pause, resume, remove, pause_all, resume_all)")
     message: str | None = Field(default=None, description="Details or error message")
 
 

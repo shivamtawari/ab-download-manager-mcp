@@ -23,6 +23,8 @@ class Settings(BaseModel):
     max_batch_size: int = 50
     cli_timeout: float = 10.0
     cli_max_output_bytes: int = 1024 * 1024  # 1 MB
+    auto_start_app: bool = True
+    auto_discover_port: bool = True
 
 
 def discover_cli_path() -> Path | None:
@@ -103,6 +105,8 @@ def load_settings() -> Settings:
     allow_private = os.environ.get("ABDM_MCP_ALLOW_PRIVATE_NETWORKS", "false").lower() in ("true", "1")
     allow_sensitive = os.environ.get("ABDM_MCP_ALLOW_SENSITIVE_HEADERS", "false").lower() in ("true", "1")
     allow_deletion = os.environ.get("ABDM_MCP_ALLOW_FILE_DELETION", "false").lower() in ("true", "1")
+    auto_start_app = os.environ.get("ABDM_MCP_AUTO_START_APP", "true").lower() in ("true", "1")
+    auto_discover_port = os.environ.get("ABDM_MCP_AUTO_DISCOVER_PORT", "true").lower() in ("true", "1")
     default_mode = os.environ.get("ABDM_MCP_DEFAULT_MODE", "interactive").lower()
     if default_mode not in ("interactive", "headless"):
         default_mode = "interactive"
@@ -124,4 +128,6 @@ def load_settings() -> Settings:
         allow_file_deletion=allow_deletion,
         default_mode=default_mode,
         max_batch_size=max_batch,
+        auto_start_app=auto_start_app,
+        auto_discover_port=auto_discover_port,
     )

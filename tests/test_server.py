@@ -12,6 +12,7 @@ def test_server_creation_and_tools():
     tool_names = {t.name for t in tools}
     expected = {
         "abdm_download",
+        "abdm_download_hls",
         "abdm_download_batch",
         "abdm_get_queues",
         "abdm_check_status",
@@ -19,6 +20,8 @@ def test_server_creation_and_tools():
         "abdm_get_download",
         "abdm_pause",
         "abdm_resume",
+        "abdm_pause_all",
+        "abdm_resume_all",
         "abdm_remove",
     }
     assert expected.issubset(tool_names)

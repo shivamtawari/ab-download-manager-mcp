@@ -57,3 +57,23 @@ async def test_add_headless(settings):
         queue_id=0,
     )
     assert ok is True
+
+
+@respx.mock
+async def test_add_headless_hls_with_options(settings):
+    route = respx.post("http://127.0.0.1:15151/start-headless-download").respond(200)
+    backend = RestBackend(settings)
+    ok = await backend.add_headless(
+        url="https://example.com/video.m3u8",
+        filename="video.mp4",
+        folder="/tmp/downloads",
+        queue_id=1,
+        speed_limit=500000,
+        start_queue=True,
+        protocol="hls",
+    )
+    assert ok is True
+    sent_json = route.calls.last.request.read().decode("utf-8")
+    assert '"type":"hls"' in sent_json or '"type": "hls"' in sent_json
+    assert '"speedLimit":500000' in sent_json or '"speedLimit": 500000' in sent_json
+    assert '"startQueue":true' in sent_json or '"startQueue": true' in sent_json

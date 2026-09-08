@@ -16,6 +16,8 @@ def test_load_settings_defaults(monkeypatch, tmp_path):
     assert settings.allow_sensitive_headers is False
     assert settings.allow_file_deletion is False
     assert settings.default_mode == "interactive"
+    assert settings.auto_start_app is True
+    assert settings.auto_discover_port is True
 
 
 def test_load_settings_custom_env(monkeypatch, tmp_path):
@@ -24,6 +26,8 @@ def test_load_settings_custom_env(monkeypatch, tmp_path):
     monkeypatch.setenv("ABDM_MCP_ALLOW_PRIVATE_NETWORKS", "true")
     monkeypatch.setenv("ABDM_MCP_ALLOW_SENSITIVE_HEADERS", "true")
     monkeypatch.setenv("ABDM_MCP_ALLOW_FILE_DELETION", "true")
+    monkeypatch.setenv("ABDM_MCP_AUTO_START_APP", "false")
+    monkeypatch.setenv("ABDM_MCP_AUTO_DISCOVER_PORT", "false")
     monkeypatch.setenv("ABDM_MCP_DEFAULT_MODE", "headless")
     monkeypatch.setenv("ABDM_MCP_ALLOWED_DOWNLOAD_ROOTS", f"{tmp_path}/a,{tmp_path}/b")
 
@@ -33,5 +37,7 @@ def test_load_settings_custom_env(monkeypatch, tmp_path):
     assert settings.allow_private_networks is True
     assert settings.allow_sensitive_headers is True
     assert settings.allow_file_deletion is True
+    assert settings.auto_start_app is False
+    assert settings.auto_discover_port is False
     assert settings.default_mode == "headless"
     assert len(settings.allowed_roots) == 2

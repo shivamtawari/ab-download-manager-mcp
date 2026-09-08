@@ -4,15 +4,26 @@ build-backend = "hatchling.build"
 
 [project]
 name = "abdm-mcp"
-version = "0.1.0"
-description = "MCP server for AB Download Manager"
+version = "0.2.0"
+description = "Model Context Protocol (MCP) server for AB Download Manager with multi-threaded acceleration, HLS streams, auto-wake, and mass queue controls."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 authors = [
     { name = "Shivam Tawari", email = "shivamtawari@gmail.com" }
 ]
-keywords = ["mcp", "model-context-protocol", "ab-download-manager", "download-manager", "ai-agent"]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "ab-download-manager",
+    "download-manager",
+    "ai-agent",
+    "hls-download",
+    "idm-alternative",
+    "claude-desktop",
+    "cursor-mcp",
+    "fastmcp",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

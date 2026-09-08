@@ -48,10 +48,11 @@ READ_ANNOTATIONS = ToolAnnotations(
 
 SERVER_INSTRUCTIONS = (
     "Use AB Download Manager to offload large file downloads (model weights, datasets, "
-    "disk images, archives, media files) instead of downloading them directly through "
+    "disk images, archives, media files, and HLS video streams) instead of downloading them directly through "
     "in-process HTTP calls. Use 'interactive' mode when the user should confirm the download "
     "location via the desktop GUI, or 'headless' mode for silent background downloads into "
-    "the sandboxed download folder. Check status with abdm_check_status before querying queues."
+    "the sandboxed download folder. Use abdm_download_hls for .m3u8 streams, abdm_pause_all / abdm_resume_all "
+    "for mass task control, and check status with abdm_check_status before querying queues."
 )
 
 
@@ -73,7 +74,7 @@ def create_server(
     @mcp.tool(
         name="abdm_download",
         description=(
-            "Submit a download task to AB Download Manager with multi-threaded acceleration. "
+            "Submit an HTTP/HTTPS download task to AB Download Manager with multi-threaded acceleration. "
             "In 'interactive' mode, triggers the desktop confirmation GUI. "
             "In 'headless' mode, starts silent background download into allowed sandboxed folder."
         ),
@@ -85,8 +86,11 @@ def create_server(
         filename: str | None = None,
         subdirectory: str | None = None,
         queue_id: int | None = None,
+        category_id: int | None = None,
         headers: dict[str, str] | None = None,
         download_page: str | None = None,
+        speed_limit_bytes: int | None = None,
+        start_queue: bool = False,
     ) -> DownloadSubmission:
         return await service.download(
             url=url,
@@ -94,8 +98,47 @@ def create_server(
             filename=filename,
             subdirectory=subdirectory,
             queue_id=queue_id,
+            category_id=category_id,
             headers=headers,
             download_page=download_page,
+            speed_limit_bytes=speed_limit_bytes,
+            start_queue=start_queue,
+            protocol="http",
+        )
+
+    @mcp.tool(
+        name="abdm_download_hls",
+        description=(
+            "Download an HLS (.m3u8) streaming video/audio task with segment reassembly. "
+            "In 'interactive' mode, triggers the desktop confirmation GUI. "
+            "In 'headless' mode, starts silent background download into allowed sandboxed folder."
+        ),
+        annotations=DOWNLOAD_ANNOTATIONS,
+    )
+    async def abdm_download_hls(
+        url: str,
+        mode: Literal["interactive", "headless"] = default_mode,
+        filename: str | None = None,
+        subdirectory: str | None = None,
+        queue_id: int | None = None,
+        category_id: int | None = None,
+        headers: dict[str, str] | None = None,
+        download_page: str | None = None,
+        speed_limit_bytes: int | None = None,
+        start_queue: bool = False,
+    ) -> DownloadSubmission:
+        return await service.download(
+            url=url,
+            mode=mode,
+            filename=filename,
+            subdirectory=subdirectory,
+            queue_id=queue_id,
+            category_id=category_id,
+            headers=headers,
+            download_page=download_page,
+            speed_limit_bytes=speed_limit_bytes,
+            start_queue=start_queue,
+            protocol="hls",
         )
 
     @mcp.tool(
@@ -151,30 +194,46 @@ def create_server(
 
     @mcp.tool(
         name="abdm_pause",
-        description="Pause an active download task.",
+        description="Pause one or more active download tasks by ID.",
         annotations=PAUSE_RESUME_ANNOTATIONS,
     )
-    async def abdm_pause(download_id: str) -> ActionResult:
+    async def abdm_pause(download_id: str | list[str]) -> ActionResult:
         return await service.pause(download_id=download_id)
 
     @mcp.tool(
         name="abdm_resume",
-        description="Resume a paused download task.",
+        description="Resume one or more paused download tasks by ID.",
         annotations=PAUSE_RESUME_ANNOTATIONS,
     )
-    async def abdm_resume(download_id: str) -> ActionResult:
+    async def abdm_resume(download_id: str | list[str]) -> ActionResult:
         return await service.resume(download_id=download_id)
+
+    @mcp.tool(
+        name="abdm_pause_all",
+        description="Pause all currently active download tasks across AB Download Manager.",
+        annotations=PAUSE_RESUME_ANNOTATIONS,
+    )
+    async def abdm_pause_all() -> ActionResult:
+        return await service.pause_all()
+
+    @mcp.tool(
+        name="abdm_resume_all",
+        description="Resume all currently paused download tasks across AB Download Manager.",
+        annotations=PAUSE_RESUME_ANNOTATIONS,
+    )
+    async def abdm_resume_all() -> ActionResult:
+        return await service.resume_all()
 
     @mcp.tool(
         name="abdm_remove",
         description=(
-            "Remove/cancel a download task. File deletion requires explicit policy "
+            "Remove/cancel one or more download tasks. File deletion requires explicit policy "
             "opt-in (ABDM_MCP_ALLOW_FILE_DELETION=true) and path verification."
         ),
         annotations=REMOVE_ANNOTATIONS,
     )
     async def abdm_remove(
-        download_id: str,
+        download_id: str | list[str],
         delete_file: bool = False,
     ) -> ActionResult:
         return await service.remove(download_id=download_id, delete_file=delete_file)

@@ -2,6 +2,7 @@
 
 import asyncio
 import re
+from typing import Literal
 
 from abdm_mcp.backends.base import AbstractBaseBackend
 from abdm_mcp.config import Settings
@@ -12,6 +13,13 @@ from abdm_mcp.errors import (
     DownloadNotFoundError,
 )
 from abdm_mcp.models import DownloadInfo
+
+ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+
+
+def strip_ansi(text: str) -> str:
+    """Remove ANSI escape sequences from console text."""
+    return ANSI_ESCAPE_RE.sub("", text)
 
 
 class CliBackend(AbstractBaseBackend):
@@ -31,6 +39,39 @@ class CliBackend(AbstractBaseBackend):
         except Exception:
             return False
 
+    async def start_if_not_started(self) -> bool:
+        """
+        Ensure the AB Download Manager desktop application is running.
+        Invokes `abdm gui start-if-not-started`.
+        """
+        if not self.cli_path or not self.cli_path.exists():
+            return False
+        try:
+            rc, stdout, stderr = await self._execute_bounded(["gui", "start-if-not-started"])
+            return rc == 0
+        except Exception:
+            return False
+
+    async def get_integration_port(self) -> int | None:
+        """
+        Query the active integration port via `abdm gui integration show`.
+        Returns the parsed integer port or None if unavailable.
+        """
+        if not self.cli_path or not self.cli_path.exists():
+            return None
+        try:
+            rc, stdout, stderr = await self._execute_bounded(["gui", "integration", "show"])
+            if rc == 0 and stdout:
+                clean = strip_ansi(stdout).strip()
+                match = re.search(r"\b(\d{2,5})\b", clean)
+                if match:
+                    port = int(match.group(1))
+                    if 1 <= port <= 65535:
+                        return port
+            return None
+        except Exception:
+            return None
+
     async def get_version(self) -> str | None:
         """Query and parse the AB Download Manager CLI version."""
         if not self.cli_path or not self.cli_path.exists():
@@ -38,10 +79,11 @@ class CliBackend(AbstractBaseBackend):
         try:
             rc, stdout, _ = await self._execute_bounded(["--version"])
             if rc == 0 and stdout:
-                match = re.search(r"version\s+([0-9.]+)", stdout, re.IGNORECASE)
+                clean_stdout = strip_ansi(stdout)
+                match = re.search(r"version\s+([0-9.]+)", clean_stdout, re.IGNORECASE)
                 if match:
                     return match.group(1)
-                first_line = stdout.strip().splitlines()[0]
+                first_line = clean_stdout.strip().splitlines()[0]
                 return first_line
             return None
         except Exception:
@@ -126,24 +168,32 @@ class CliBackend(AbstractBaseBackend):
         filename: str | None = None,
         folder: str | None = None,
         queue_id: int | None = None,
+        category_id: int | None = None,
         headers: dict[str, str] | None = None,
         download_page: str | None = None,
         start: bool = True,
+        start_queue: bool = False,
+        protocol: Literal["http", "hls"] = "http",
     ) -> str:
         """
-        Add an HTTP download task via CLI. Returns the assigned integer download ID.
+        Add an HTTP or HLS download task via CLI. Returns the assigned integer download ID.
         """
-        args = ["download", "add", "http", "--link", url]
+        subcommand = "hls" if protocol == "hls" else "http"
+        args = ["download", "add", subcommand, "--link", url]
         if filename:
             args.extend(["--name", filename])
         if folder:
             args.extend(["--folder", str(folder)])
         if queue_id is not None:
             args.extend(["--queue", str(queue_id)])
+        if category_id is not None:
+            args.extend(["--category", str(category_id)])
         if download_page:
             args.extend(["--download-page", download_page])
         if start:
             args.append("--start")
+        if start_queue:
+            args.append("--start-queue")
         if headers:
             for k, v in headers.items():
                 args.extend(["--header", f"{k}: {v}"])
@@ -165,74 +215,82 @@ class CliBackend(AbstractBaseBackend):
 
         raise CLIUnavailableError(f"Could not parse download ID from CLI output: {stdout}")
 
-    async def show_downloads(self, download_id: str | None = None) -> list[DownloadInfo]:
+    async def show_downloads(
+        self, download_ids: list[str] | str | None = None
+    ) -> list[DownloadInfo]:
         """
-        Query download status using `abdm download show [<id>]`.
-        Parses the ASCII box table format.
+        Query download status using `abdm download show [<id>...]`.
+        Parses ASCII / Unicode table format, stripping ANSI styling.
         """
         args = ["download", "show"]
-        if download_id:
-            args.append(str(download_id))
+        requested_ids: list[str] = []
+        if isinstance(download_ids, str):
+            requested_ids = [download_ids.strip()]
+        elif isinstance(download_ids, (list, tuple, set)):
+            requested_ids = [str(d).strip() for d in download_ids if str(d).strip()]
+
+        if requested_ids:
+            args.extend(requested_ids)
 
         rc, stdout, stderr = await self._execute_bounded(args)
         if rc != 0:
-            if download_id and ("not found" in stdout.lower() or "not found" in stderr.lower()):
-                raise DownloadNotFoundError(f"Download task #{download_id} not found.")
+            if requested_ids and ("not found" in stdout.lower() or "not found" in stderr.lower()):
+                raise DownloadNotFoundError(f"Download task(s) {requested_ids} not found.")
             raise CLIUnavailableError(f"CLI show failed (exit code {rc}): {stderr or stdout}")
 
-        if "no downloads found" in stdout.lower():
+        clean_stdout = strip_ansi(stdout)
+        if "no downloads found" in clean_stdout.lower():
             return []
 
-        # Parse ASCII table rows: ? ID ? Status ? Name ? Folder ?
-        # Note: box drawing characters can be '?' or unicode box lines
         results: list[DownloadInfo] = []
-        lines = stdout.splitlines()
-        row_pattern = re.compile(
-            r"^[?|\u2502]\s*(\d+)\s*[?|\u2502]\s*([^?|\u2502]+?)\s*[?|\u2502]\s*([^?|\u2502]+?)\s*[?|\u2502]\s*([^?|\u2502]+?)\s*[?|\u2502]"
-        )
-
-        for line in lines:
+        for line in clean_stdout.splitlines():
             line_str = line.strip()
-            match = row_pattern.match(line_str)
-            if match:
-                d_id = match.group(1).strip()
-                status = match.group(2).strip()
-                name = match.group(3).strip()
-                folder = match.group(4).strip()
-                # Skip header row if matched
-                if d_id.lower() == "id" or status.lower() == "status":
-                    continue
-                results.append(
-                    DownloadInfo(
-                        id=d_id,
-                        status=status,
-                        name=name,
-                        folder=folder,
-                    )
-                )
+            if not line_str:
+                continue
 
-        if download_id and not results:
-            raise DownloadNotFoundError(f"Download #{download_id} not found in CLI output.")
+            # Split line on vertical border characters (Unicode light/double or ASCII | / ?)
+            parts = re.split(r"[\u2502\u2551|?]", line_str)
+            if len(parts) >= 5:
+                cells = [c.strip() for c in parts[1:-1]]
+                if len(cells) >= 4:
+                    d_id, status, name, folder = cells[0], cells[1], cells[2], cells[3]
+                    if d_id.lower() == "id" or status.lower() == "status":
+                        continue
+                    if d_id.isdigit():
+                        results.append(
+                            DownloadInfo(
+                                id=d_id,
+                                status=status,
+                                name=name,
+                                folder=folder,
+                            )
+                        )
+
+        if requested_ids and not results:
+            raise DownloadNotFoundError(f"Download task(s) {requested_ids} not found in CLI output.")
 
         return results
 
-    async def pause_download(self, download_id: str) -> bool:
-        """Pause a download task by ID."""
-        rc, stdout, stderr = await self._execute_bounded(["download", "pause", str(download_id)])
+    async def pause_download(self, download_ids: list[str] | str) -> bool:
+        """Pause one or more download tasks by ID."""
+        ids = [download_ids] if isinstance(download_ids, str) else list(download_ids)
+        rc, stdout, stderr = await self._execute_bounded(["download", "pause"] + [str(i) for i in ids])
         if rc != 0:
-            raise CLIUnavailableError(f"Failed to pause download #{download_id}: {stderr or stdout}")
+            raise CLIUnavailableError(f"Failed to pause download(s) {ids}: {stderr or stdout}")
         return True
 
-    async def resume_download(self, download_id: str) -> bool:
-        """Resume a download task by ID."""
-        rc, stdout, stderr = await self._execute_bounded(["download", "resume", str(download_id)])
+    async def resume_download(self, download_ids: list[str] | str) -> bool:
+        """Resume one or more download tasks by ID."""
+        ids = [download_ids] if isinstance(download_ids, str) else list(download_ids)
+        rc, stdout, stderr = await self._execute_bounded(["download", "resume"] + [str(i) for i in ids])
         if rc != 0:
-            raise CLIUnavailableError(f"Failed to resume download #{download_id}: {stderr or stdout}")
+            raise CLIUnavailableError(f"Failed to resume download(s) {ids}: {stderr or stdout}")
         return True
 
-    async def remove_download(self, download_id: str) -> bool:
-        """Remove a download task by ID."""
-        rc, stdout, stderr = await self._execute_bounded(["download", "remove", str(download_id)])
+    async def remove_download(self, download_ids: list[str] | str) -> bool:
+        """Remove one or more download tasks by ID."""
+        ids = [download_ids] if isinstance(download_ids, str) else list(download_ids)
+        rc, stdout, stderr = await self._execute_bounded(["download", "remove"] + [str(i) for i in ids])
         if rc != 0:
-            raise CLIUnavailableError(f"Failed to remove download #{download_id}: {stderr or stdout}")
+            raise CLIUnavailableError(f"Failed to remove download(s) {ids}: {stderr or stdout}")
         return True
